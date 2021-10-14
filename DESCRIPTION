@@ -7,4 +7,9 @@ Figure 8:
 
 47440896 run -- measure dycore only, or 'energy reset' run
 
+contrun* are running scripts.
+gitstat* are git status info on changes for a particular run.
+usercam* are copies of namelist (usually, empty) for runs.
+
+
 
