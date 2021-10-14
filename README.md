@@ -1,3 +1,3 @@
 # cam-enthalpy-runs
 
-Created to save informationon runs for paper "Reconciling and improving formulations ..." .
+Created to save information on runs for paper "Reconciling and improving formulations ..." .
