@@ -1,0 +1,10 @@
+!mfilt          = 1,200,200
+!nhtfrq         = 0,-720,-8760
+!fincl2 ='PWflux:A','CPflux:A','dTEevap:A','CPfluxe:A','CPfluxp:A','BCflux:A','KEflux:A'
+!fincl3 ='PWflux:A','CPflux:A','dTEevap:A','CPfluxe:A','CPfluxp:A','BCflux:A','KEflux:A'
+!interpolate_output    = .false.,.true.,.true.
+!interpolate_nlat      =  0,    , 300, 300
+!interpolate_nlon      =  0,    , 600, 600
+!interpolate_type      =  0,    , 1  , 1
+!interpolate_gridtype  =  0,    , 2  , 2
+!print_energy_errors  = .true.

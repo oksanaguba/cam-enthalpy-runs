@@ -1,0 +1,112 @@
+#!/bin/bash -e
+#The -e option means "if any pipeline ever ends with a non-zero ('error') exit status, terminate the script immediately". 
+
+which=CAM-PEL
+fol=cesm-pel3
+nn=1024
+
+fcomp=F2000climo
+#fcomp=F2010-SCREAM-HR-DYAMOND2
+#fcomp=F2010-SCREAM-HR
+
+#
+#${which}/cime/scripts/create_newcase -case $fol -res ne30_ne30 -mach anvil -compiler intel -compset $fcomp
+
+#cori-knl or cori-haswell
+
+if true; then
+${which}/cime/scripts/create_newcase -case ${fol} -compset ${fcomp} -res ne30pg3_ne30pg3_mg17 -mach cori-knl --run-unsupported -project e3sm  --output-root /global/cscratch1/sd/onguba/cesm_scratch  --pecount ${nn}x1
+echo "I am ${0}"
+cp ${0} ${fol}/
+cd $fol
+fi
+
+
+#./xmlchange CAM_TARGET=theta-l
+#./xmlchange CAM_TARGET=preqx
+./xmlchange JOB_WALLCLOCK_TIME=14:00:00
+
+./xmlchange STOP_N=14;  ./xmlchange STOP_OPTION=nmonths ; 
+#./xmlchange RESUBMIT=6;
+./xmlchange REST_N=2 ; ./xmlchange REST_OPTION=nmonths ;
+
+./xmlchange DIN_LOC_ROOT="/global/cscratch1/sd/onguba/inputdata_cesm"
+./xmlchange DOUT_S=FALSE
+
+
+if false; then
+./xmlchange --file env_mach_pes.xml NTASKS_ATM=${nn}
+./xmlchange --file env_mach_pes.xml NTASKS_CPL=${nn}
+./xmlchange --file env_mach_pes.xml NTASKS_OCN=${nn}
+./xmlchange --file env_mach_pes.xml NTASKS_WAV=${nn}
+./xmlchange --file env_mach_pes.xml NTASKS_GLC=${nn}
+./xmlchange --file env_mach_pes.xml NTASKS_ROF=${nn}
+./xmlchange --file env_mach_pes.xml NTASKS_LND=${nn}
+#do not modify these!
+./xmlchange --file env_mach_pes.xml NTASKS_ICE=64
+./xmlchange --file env_mach_pes.xml NTASKS_ESP=1
+./xmlchange ROOTPE=0
+fi
+
+./case.setup --reset
+./case.setup
+
+uf=user_nl_cam
+
+if true; then
+############### output
+cat > $uf <<EOF
+!mfilt          = 1,200,200
+!nhtfrq         = 0,-720,-8760
+!fincl2 ='PWflux:A','CPflux:A','dTEevap:A','CPfluxe:A','CPfluxp:A','BCflux:A','KEflux:A'
+!fincl3 ='PWflux:A','CPflux:A','dTEevap:A','CPfluxe:A','CPfluxp:A','BCflux:A','KEflux:A'
+!interpolate_output    = .false.,.true.,.true.
+!interpolate_nlat      =  0,    , 300, 300
+!interpolate_nlon      =  0,    , 600, 600
+!interpolate_type      =  0,    , 1  , 1
+!interpolate_gridtype  =  0,    , 2  , 2
+!print_energy_errors  = .true.
+EOF
+fi #edit atm nl
+
+
+./case.build
+
+
+if true; then
+./case.submit
+
+#we only need the latest ID
+#id=`grep -o case.run:\[0-9\]\* CaseStatus | sed -e 's/.*://' | tail -1`
+id=`grep -o case.run:\[0-9\]\* env_run.xml | sed -e 's/.*://' | tail -1`
+
+echo $id
+cp $uf usercam."${id}"
+
+#some git commands do not work in cesm clones
+if true; then
+gitstat=gitstat."${id}"
+cd ~/${which}/src
+echo " running stats on clone ${which}"
+echo " status is ------------- " >> ${gitstat}
+git status >> ${gitstat}
+echo " branch is ------------- " >> ${gitstat}
+git branch >> ${gitstat}
+echo " diffs are ------------- " >> ${gitstat}
+git diff >> ${gitstat}
+echo " last 10 commits are ------------- " >> ${gitstat}
+git log --first-parent  --pretty=oneline  HEAD~10..HEAD  >> ${gitstat}
+
+cd ~/$fol
+mv ~/${which}/src/${gitstat} .
+fi #gitstat
+
+
+fi #if submit
+
+
+
+
+
+
+
